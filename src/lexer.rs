@@ -50,3 +50,52 @@ pub fn lex(code: &str) -> LexResult {
 
     Ok(tokens)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn check_lexed_correctly(code: &str, expected: Vec<Token>) {
+        let res = lex(code);
+        assert!(res.is_ok());
+        let res = res.unwrap();
+        assert_eq!(res.len(), expected.len());
+        for (actual, expected) in std::iter::zip(res, expected) {
+            assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn single_variable() {
+        check_lexed_correctly("x", vec![Token::Variable("x".to_string())]);
+    }
+    #[test]
+    fn multi_char_variables() {
+        check_lexed_correctly(
+            "foo bar",
+            vec![
+                Token::Variable("foo".to_string()),
+                Token::Variable("bar".to_string()),
+            ],
+        );
+    }
+
+    #[test]
+    fn compound_statement() {
+        check_lexed_correctly(
+            "\\  x. \n\\yy . \t(u\n\r yy)",
+            vec![
+                Token::Lambda,
+                Token::Variable("x".to_string()),
+                Token::Dot,
+                Token::Lambda,
+                Token::Variable("yy".to_string()),
+                Token::Dot,
+                Token::LeftParen,
+                Token::Variable("u".to_string()),
+                Token::Variable("yy".to_string()),
+                Token::RightParen,
+            ],
+        );
+    }
+}
