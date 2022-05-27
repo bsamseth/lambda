@@ -114,7 +114,6 @@ fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expres
         match token {
             Token::LeftParen => {
                 (offset, expr) = parse_expression(&tokens, offset + 1);
-                assert!(offset == tokens.len() || tokens[offset] == Token::RightParen);
             }
             Token::RightParen => {
                 offset += 1;
@@ -128,7 +127,7 @@ fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expres
         };
 
         last_expr = match expr {
-            None => last_expr,
+            None => continue,
             Some(y) => match last_expr {
                 None => Some(y),
                 Some(x) => Some(Expression::new_application(x, y)),
@@ -138,13 +137,6 @@ fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expres
     println!("returning {} {:?}", offset, last_expr);
 
     (offset, last_expr)
-    //
-    // (
-    //     0,
-    //     Expression::new_function(
-    //         vec![String::from("x"), String::from("y")],
-    //     ),
-    // )
 }
 
 #[cfg(test)]
@@ -173,5 +165,13 @@ mod tests {
         check_parsed_correctly("(x (y))", "x y");
         check_parsed_correctly("z ((x (y)))", "z (x y)");
         check_parsed_correctly("(z ((x (y))))", "z (x y)");
+        check_parsed_correctly("((z u) ((x (y))))", "(z u) (x y)");
+        check_parsed_correctly("(x y) (u v)", "(x y) (u v)");
+    }
+    #[test]
+    fn left_associativity() {
+        check_parsed_correctly("x y z", "(x y) z");
+        check_parsed_correctly("x (y z)", "x (y z)");
+        check_parsed_correctly("x (y z) u", "(x (y z)) u");
     }
 }
