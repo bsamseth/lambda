@@ -1,6 +1,4 @@
-
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Variable(String),
     Lambda,
@@ -9,9 +7,7 @@ pub enum Token {
     RightParen,
 }
 
-
 pub type LexResult = std::io::Result<Vec<Token>>;
-
 
 pub fn lex(code: &str) -> LexResult {
     let mut tokens: Vec<Token> = Vec::new();
@@ -32,12 +28,17 @@ pub fn lex(code: &str) -> LexResult {
         }
 
         let token = match c {
-            ' ' | '\t' => continue,
+            ' ' | '\t' | '\n' | '\r' => continue,
             '.' => Token::Dot,
             '\\' | 'λ' => Token::Lambda,
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
-            _ => return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Syntax error"))
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Syntax error",
+                ))
+            }
         };
 
         tokens.push(token);
