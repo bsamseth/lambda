@@ -21,7 +21,7 @@ pub struct Expression {
     params: Option<Vec<String>>,
     body: Option<Box<Expression>>,
 
-    // If this is an applicaiton:
+    // If this is an application:
     lhs: Option<Box<Expression>>,
     rhs: Option<Box<Expression>>,
 }
@@ -256,5 +256,13 @@ mod tests {
     fn combined_expressions() {
         check_parsed_correctly("(λx.x) (λy.y) z", "((λx.x) (λy.y)) z");
         check_parsed_correctly("λu.(λx.x) (λy.y)", "λu.(λx.x) (λy.y)");
+        check_parsed_correctly(
+            "(λh.(λx.h (x x)) (λx.h (x x))) g",
+            "(λh.(λx.h (x x)) (λx.h (x x))) g",
+        );
+        check_parsed_correctly(
+            "g (\n(λx.g(x x))(λx.g (  x   x)))",
+            "g ((λx.g (x x)) (λx.g (x x)))",
+        );
     }
 }
