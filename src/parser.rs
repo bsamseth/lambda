@@ -28,7 +28,7 @@ pub struct Expression {
 
 pub fn parse(maybe_tokens: &LexResult) -> Option<Expression> {
     match maybe_tokens {
-        Ok(tokens) => parse_expression(tokens, 0).1,
+        Ok(tokens) => parse_expression(&mut TokenIterator::new(tokens)),
         Err(_) => None,
     }
 }
@@ -68,6 +68,36 @@ impl Expression {
     }
 }
 
+#[derive(Copy, Clone)]
+struct TokenIterator<'a> {
+    tokens: &'a Vec<Token>,
+    index: usize,
+}
+
+impl<'a> TokenIterator<'a> {
+    fn new(tokens: &'a Vec<Token>) -> Self {
+        Self { tokens, index: 0 }
+    }
+
+    fn peek(&self) -> Option<&Token> {
+        self.tokens.get(self.index)
+    }
+}
+
+impl<'a> Iterator for TokenIterator<'a> {
+    type Item = &'a Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.tokens.len() {
+            None
+        } else {
+            let token = &self.tokens[self.index];
+            self.index += 1;
+            Some(token)
+        }
+    }
+}
+
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.kind {
@@ -79,7 +109,6 @@ impl fmt::Display for Expression {
                 self.body.as_ref().unwrap()
             ),
             ExpressionKind::Application => {
-                // TODO: Fix this monstrosity (for some reason this was hard to do simply).
                 let &lhs = &self.lhs.as_ref().unwrap();
                 let &rhs = &self.rhs.as_ref().unwrap();
                 match lhs.kind {
@@ -103,64 +132,64 @@ impl fmt::Debug for Expression {
     }
 }
 
-fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expression>) {
-    println!("starting parsing with offset {}", offset);
+fn expression_end(tokens: &TokenIterator) -> usize {
+    let mut depth = 0;
+    let mut tokens = tokens.clone();
+    while let Some(token) = tokens.next() {
+        depth += match token {
+            Token::LeftParen => 1,
+            Token::RightParen => -1,
+            _ => 0,
+        };
+        if depth < 0 {
+            break;
+        }
+    }
+    tokens.index
+}
+
+fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
     let mut last_expr: Option<Expression> = None;
-    let mut offset = offset;
-    while offset < tokens.len() {
-        let token = &tokens[offset];
-        println!("parsing token {:?}", token);
-        let expr;
-        match token {
-            Token::LeftParen => {
-                (offset, expr) = parse_expression(&tokens, offset + 1);
-            }
-            Token::RightParen => {
-                offset += 1;
-                break;
-            }
-            Token::Variable(label) => {
-                offset += 1;
-                expr = Some(Expression::new_variable(label));
-            }
+    let expression_end = expression_end(tokens);
+    // println!(
+    //     "starting parsing with offset {}, end {}",
+    //     tokens.index, expression_end
+    // );
+    while let Some(token) = tokens.next() {
+        // println!("parsing token {:?}", token);
+        let expr = match token {
+            Token::Dot => panic!("Syntax error: Unexpected dot outside of function."),
+            Token::Variable(label) => Some(Expression::new_variable(label)),
+            Token::LeftParen => parse_expression(tokens),
+            Token::RightParen => break,
             Token::Lambda => {
-                offset += 1;
                 let mut params: Vec<String> = Vec::new();
                 loop {
-                    match tokens.get(offset) {
-                        Some(Token::Variable(label)) => {
-                            params.push(label.to_string());
-                            offset += 1;
-                        }
-                        Some(t) => panic!("Syntax error: Expected variable after λ, found {:?}", t),
-                        None => panic!("Syntax error: Expected variable after λ, found EOF"),
-                    }
-                    match tokens.get(offset) {
-                        Some(Token::Dot) => offset += 1,
-                        _ => panic!("Syntax error: Expected dot after λ-parameter"),
-                    }
-
-                    match tokens.get(offset) {
-                        Some(Token::Variable(_)) => match tokens.get(offset + 1) {
-                            Some(Token::Dot) => continue,
-                            _ => break,
-                        },
+                    match tokens.next() {
+                        Some(Token::Variable(label)) => params.push(label.clone()),
+                        _ => panic!("Syntax error: Expected variable after lambda."),
+                    };
+                    match tokens.next() {
+                        Some(Token::Dot) => true,
+                        _ => panic!("Syntax error: Expected dot after parameter."),
+                    };
+                    match tokens.peek() {
+                        Some(Token::Lambda) => tokens.next(),
                         _ => break,
-                    }
+                    };
                 }
 
-                println!("{:?}", tokens);
-                println!("Parsed params for lambda: {:?}, offset {}", &params, offset);
+                // println!(
+                //     "Parsed params for lambda: {:?}, offset {}",
+                //     &params, tokens.index
+                // );
 
-                let body;
-                (offset, body) = parse_expression(&tokens, offset);
+                let body = parse_expression(tokens);
                 match body {
-                    Some(e) => expr = Some(Expression::new_function(params, e)),
+                    Some(e) => Some(Expression::new_function(params, e)),
                     None => panic!("Syntax error: Missing function body"),
                 }
-                offset += 1;
             }
-            _ => break,
         };
 
         last_expr = match expr {
@@ -169,11 +198,16 @@ fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expres
                 None => Some(y),
                 Some(x) => Some(Expression::new_application(x, y)),
             },
+        };
+        // println!("at offset {}, last_expr {:?}", tokens.index, last_expr);
+
+        if tokens.index == expression_end {
+            break;
         }
     }
-    println!("returning {} {:?}", offset, last_expr);
+    // println!("returning {} {:?}", tokens.index, last_expr);
 
-    (offset, last_expr)
+    last_expr
 }
 
 #[cfg(test)]
@@ -220,6 +254,7 @@ mod tests {
     }
     #[test]
     fn combined_expressions() {
-        // check_parsed_correctly("(λx.x x) (λx.x) y", "((λx.x x) (λx.x)) y");
+        check_parsed_correctly("(λx.x) (λy.y) z", "((λx.x) (λy.y)) z");
+        check_parsed_correctly("λu.(λx.x) (λy.y)", "λu.(λx.x) (λy.y)");
     }
 }
