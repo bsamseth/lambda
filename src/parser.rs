@@ -123,6 +123,43 @@ fn parse_expression(tokens: &Vec<Token>, offset: usize) -> (usize, Option<Expres
                 offset += 1;
                 expr = Some(Expression::new_variable(label));
             }
+            Token::Lambda => {
+                offset += 1;
+                let mut params: Vec<String> = Vec::new();
+                loop {
+                    match tokens.get(offset) {
+                        Some(Token::Variable(label)) => {
+                            params.push(label.to_string());
+                            offset += 1;
+                        }
+                        Some(t) => panic!("Syntax error: Expected variable after λ, found {:?}", t),
+                        None => panic!("Syntax error: Expected variable after λ, found EOF"),
+                    }
+                    match tokens.get(offset) {
+                        Some(Token::Dot) => offset += 1,
+                        _ => panic!("Syntax error: Expected dot after λ-parameter"),
+                    }
+
+                    match tokens.get(offset) {
+                        Some(Token::Variable(_)) => match tokens.get(offset + 1) {
+                            Some(Token::Dot) => continue,
+                            _ => break,
+                        },
+                        _ => break,
+                    }
+                }
+
+                println!("{:?}", tokens);
+                println!("Parsed params for lambda: {:?}, offset {}", &params, offset);
+
+                let body;
+                (offset, body) = parse_expression(&tokens, offset);
+                match body {
+                    Some(e) => expr = Some(Expression::new_function(params, e)),
+                    None => panic!("Syntax error: Missing function body"),
+                }
+                offset += 1;
+            }
             _ => break,
         };
 
@@ -173,5 +210,16 @@ mod tests {
         check_parsed_correctly("x y z", "(x y) z");
         check_parsed_correctly("x (y z)", "x (y z)");
         check_parsed_correctly("x (y z) u", "(x (y z)) u");
+    }
+    #[test]
+    fn lambdas() {
+        check_parsed_correctly("λx.x", "λx.x");
+        check_parsed_correctly("λx.λy.x (x y)", "λx.λy.x (x y)");
+        check_parsed_correctly("λf.λx.f (f (f x))", "λf.λx.f (f (f x))");
+        check_parsed_correctly("λf.λx.f (f (f x))", "λf.λx.f (f (f x))");
+    }
+    #[test]
+    fn combined_expressions() {
+        // check_parsed_correctly("(λx.x x) (λx.x) y", "((λx.x x) (λx.x)) y");
     }
 }
