@@ -22,7 +22,7 @@ pub fn lex(code: &str) -> LexResult {
             _ => (),
         }
 
-        if current_identifier.len() > 0 {
+        if !current_identifier.is_empty() {
             tokens.push(Token::Variable(current_identifier));
             current_identifier = String::new();
         }
@@ -44,7 +44,7 @@ pub fn lex(code: &str) -> LexResult {
         tokens.push(token);
     }
 
-    if current_identifier.len() > 0 {
+    if !current_identifier.is_empty() {
         tokens.push(Token::Variable(current_identifier));
     }
 

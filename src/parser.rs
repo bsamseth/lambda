@@ -134,7 +134,7 @@ impl fmt::Debug for Expression {
 
 fn expression_end(tokens: &TokenIterator) -> usize {
     let mut depth = 0;
-    let mut tokens = tokens.clone();
+    let mut tokens = *tokens;
     while let Some(token) = tokens.next() {
         depth += match token {
             Token::LeftParen => 1,
