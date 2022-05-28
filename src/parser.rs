@@ -5,44 +5,30 @@ mod expr;
 use super::lexer;
 use super::lexer::token::Token;
 use super::lexer::token::TokenIterator;
-use super::lexer::LexResult;
 use crate::error;
 use expr::Expression;
 use std::str;
 
-pub fn parse(maybe_tokens: &LexResult) -> Option<Expression> {
-    match maybe_tokens {
-        Ok(tokens) => parse_expression(&mut TokenIterator::new(tokens)),
-        Err(_) => None,
-    }
-}
+pub type ParseResult = error::Result<Expression>;
 
 impl str::FromStr for Expression {
     type Err = error::SyntaxError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> ParseResult {
         let tokens = lexer::lex(s)?;
         let mut tokens = TokenIterator::new(&tokens);
-        let expr = parse_expression(&mut tokens);
-        match expr {
-            Some(e) => Ok(e),
-            None => Err("Failed to parse code end of input".into()),
-        }
+        parse_expression(&mut tokens)
     }
 }
 
-fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
+fn parse_expression(tokens: &mut TokenIterator) -> ParseResult {
     let mut last_expr: Option<Expression> = None;
     let expression_end = tokens.end_of_expr();
-    // println!(
-    //     "starting parsing with offset {}, end {}",
-    //     tokens.index, expression_end
-    // );
+
     while let Some(token) = tokens.next() {
-        // println!("parsing token {:?}", token);
         let expr = match token {
-            Token::Dot => panic!("Syntax error: Unexpected dot outside of function."),
-            Token::Variable(label) => Some(Expression::new_variable(label)),
+            Token::Dot => Err("Unexpected dot outside of function.".into()),
+            Token::Variable(label) => Ok(Expression::new_variable(label)),
             Token::LeftParen => parse_expression(tokens),
             Token::RightParen => break,
             Token::Lambda => {
@@ -50,11 +36,11 @@ fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
                 loop {
                     match tokens.next() {
                         Some(Token::Variable(label)) => params.push(label.clone()),
-                        _ => panic!("Syntax error: Expected variable after lambda."),
+                        _ => return Err("Expected variable after lambda.".into()),
                     };
                     match tokens.next() {
                         Some(Token::Dot) => true,
-                        _ => panic!("Syntax error: Expected dot after parameter."),
+                        _ => return Err("Expected dot after parameter.".into()),
                     };
                     match tokens.peek() {
                         Some(Token::Lambda) => tokens.next(),
@@ -62,46 +48,36 @@ fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
                     };
                 }
 
-                // println!(
-                //     "Parsed params for lambda: {:?}, offset {}",
-                //     &params, tokens.index
-                // );
-
-                let body = parse_expression(tokens);
-                match body {
-                    Some(e) => Some(Expression::new_function(params, e)),
-                    None => panic!("Syntax error: Missing function body"),
-                }
+                let body = parse_expression(tokens)?;
+                Ok(Expression::new_function(params, body))
             }
         };
 
-        last_expr = match expr {
-            None => continue,
-            Some(y) => match last_expr {
-                None => Some(y),
-                Some(x) => Some(Expression::new_application(x, y)),
-            },
+        let y = expr?;
+        last_expr = match last_expr {
+            None => Some(y),
+            Some(x) => Some(Expression::new_application(x, y)),
         };
-        // println!("at offset {}, last_expr {:?}", tokens.index, last_expr);
 
         if tokens.index() == expression_end {
             break;
         }
     }
-    // println!("returning {} {:?}", tokens.index, last_expr);
 
-    last_expr
+    match last_expr {
+        Some(expr) => Ok(expr),
+        None => Err("The code does not contain an expression.".into()),
+    }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use super::super::lexer;
     use super::*;
 
     fn check_parsed_correctly(code: &str, expected: &str) {
-        let expr = parse(&lexer::lex(code));
-        assert!(expr.is_some());
+        let expr: ParseResult = code.parse();
+        assert!(expr.is_ok());
         assert_eq!(expr.unwrap().to_string(), expected);
     }
 
