@@ -1,13 +1,8 @@
-#[derive(Debug, PartialEq)]
-pub enum Token {
-    Variable(String),
-    Lambda,
-    Dot,
-    LeftParen,
-    RightParen,
-}
+pub mod token;
+use super::error;
+use token::Token;
 
-pub type LexResult = std::io::Result<Vec<Token>>;
+pub type LexResult = error::Result<Vec<Token>>;
 
 pub fn lex(code: &str) -> LexResult {
     let mut tokens: Vec<Token> = Vec::new();
@@ -34,10 +29,7 @@ pub fn lex(code: &str) -> LexResult {
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
             _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Syntax error",
-                ))
+                return Err(format!("Illegal character {}", c).into());
             }
         };
 

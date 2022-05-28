@@ -1,30 +1,14 @@
 // #![allow(dead_code)]
 #![allow(unused_variables)]
+mod expr;
 
-use super::lexer::{LexResult, Token};
-use std::fmt;
-
-#[derive(Debug)]
-pub enum ExpressionKind {
-    Variable,
-    Function,
-    Application,
-}
-
-pub struct Expression {
-    kind: ExpressionKind,
-
-    // If this is a variable:
-    label: Option<String>,
-
-    // If this is a function:
-    params: Option<Vec<String>>,
-    body: Option<Box<Expression>>,
-
-    // If this is an application:
-    lhs: Option<Box<Expression>>,
-    rhs: Option<Box<Expression>>,
-}
+use super::lexer;
+use super::lexer::token::Token;
+use super::lexer::token::TokenIterator;
+use super::lexer::LexResult;
+use crate::error;
+use expr::Expression;
+use std::str;
 
 pub fn parse(maybe_tokens: &LexResult) -> Option<Expression> {
     match maybe_tokens {
@@ -33,124 +17,23 @@ pub fn parse(maybe_tokens: &LexResult) -> Option<Expression> {
     }
 }
 
-impl Expression {
-    fn new_variable(label: &str) -> Self {
-        Self {
-            kind: ExpressionKind::Variable,
-            label: Some(String::from(label)),
-            params: None,
-            body: None,
-            lhs: None,
-            rhs: None,
+impl str::FromStr for Expression {
+    type Err = error::SyntaxError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let tokens = lexer::lex(s)?;
+        let mut tokens = TokenIterator::new(&tokens);
+        let expr = parse_expression(&mut tokens);
+        match expr {
+            Some(e) => Ok(e),
+            None => Err("Failed to parse code end of input".into()),
         }
     }
-
-    fn new_function(params: Vec<String>, body: Expression) -> Self {
-        Self {
-            kind: ExpressionKind::Function,
-            label: None,
-            params: Some(params),
-            body: Some(Box::new(body)),
-            lhs: None,
-            rhs: None,
-        }
-    }
-
-    fn new_application(lhs: Expression, rhs: Expression) -> Self {
-        Self {
-            kind: ExpressionKind::Application,
-            label: None,
-            params: None,
-            body: None,
-            lhs: Some(Box::new(lhs)),
-            rhs: Some(Box::new(rhs)),
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-struct TokenIterator<'a> {
-    tokens: &'a Vec<Token>,
-    index: usize,
-}
-
-impl<'a> TokenIterator<'a> {
-    fn new(tokens: &'a Vec<Token>) -> Self {
-        Self { tokens, index: 0 }
-    }
-
-    fn peek(&self) -> Option<&Token> {
-        self.tokens.get(self.index)
-    }
-}
-
-impl<'a> Iterator for TokenIterator<'a> {
-    type Item = &'a Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.index >= self.tokens.len() {
-            None
-        } else {
-            let token = &self.tokens[self.index];
-            self.index += 1;
-            Some(token)
-        }
-    }
-}
-
-impl fmt::Display for Expression {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.kind {
-            ExpressionKind::Variable => write!(f, "{}", self.label.as_ref().unwrap()),
-            ExpressionKind::Function => write!(
-                f,
-                "λ{}.{}",
-                self.params.as_ref().unwrap().join(".λ"),
-                self.body.as_ref().unwrap()
-            ),
-            ExpressionKind::Application => {
-                let &lhs = &self.lhs.as_ref().unwrap();
-                let &rhs = &self.rhs.as_ref().unwrap();
-                match lhs.kind {
-                    ExpressionKind::Variable => match rhs.kind {
-                        ExpressionKind::Variable => write!(f, "{} {}", lhs, rhs),
-                        _ => write!(f, "{} ({})", lhs, rhs),
-                    },
-                    _ => match rhs.kind {
-                        ExpressionKind::Variable => write!(f, "({}) {}", lhs, rhs),
-                        _ => write!(f, "({}) ({})", lhs, rhs),
-                    },
-                }
-            }
-        }
-    }
-}
-
-impl fmt::Debug for Expression {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", &self)
-    }
-}
-
-fn expression_end(tokens: &TokenIterator) -> usize {
-    let mut depth = 0;
-    let mut tokens = *tokens;
-    while let Some(token) = tokens.next() {
-        depth += match token {
-            Token::LeftParen => 1,
-            Token::RightParen => -1,
-            _ => 0,
-        };
-        if depth < 0 {
-            break;
-        }
-    }
-    tokens.index
 }
 
 fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
     let mut last_expr: Option<Expression> = None;
-    let expression_end = expression_end(tokens);
+    let expression_end = tokens.end_of_expr();
     // println!(
     //     "starting parsing with offset {}, end {}",
     //     tokens.index, expression_end
@@ -201,7 +84,7 @@ fn parse_expression(tokens: &mut TokenIterator) -> Option<Expression> {
         };
         // println!("at offset {}, last_expr {:?}", tokens.index, last_expr);
 
-        if tokens.index == expression_end {
+        if tokens.index() == expression_end {
             break;
         }
     }
