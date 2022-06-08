@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExpressionKind {
     Variable,
     Function,
@@ -22,7 +22,7 @@ pub trait Application: Kind {
     fn rhs(&self) -> &Box<Expression>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Expression {
     kind: ExpressionKind,
 

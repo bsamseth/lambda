@@ -5,7 +5,7 @@ fn check_evaluation(code: &str, expected: &str) {
     let expr: Expression = code
         .parse()
         .expect("Failed to parse expression before evaluation.");
-    let result = evaluate(&expr).expect("Failed to evaluate expression.");
+    let result = evaluate(expr).expect("Failed to evaluate expression.");
     assert_eq!(result.to_string(), expected);
 }
 
@@ -22,4 +22,11 @@ fn single_function() {
 #[test]
 fn single_application() {
     check_evaluation("(λx.x) y", "y");
+}
+
+#[test]
+fn more_applications() {
+    check_evaluation("(λx.x x) y", "y y");
+    check_evaluation("(λx.λy.y) z", "λy.y");
+    check_evaluation("(λx.λy.y x) z", "λy.y z");
 }
