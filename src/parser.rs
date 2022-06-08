@@ -1,4 +1,4 @@
-mod expr;
+pub mod expr;
 
 use super::lexer;
 use super::lexer::token::Token;
