@@ -7,7 +7,7 @@ use crate::error;
 use expr::Expression;
 use std::str;
 
-pub type ParseResult = error::Result<Expression>;
+pub type ParseResult = Result<Expression, error::SyntaxError>;
 
 impl str::FromStr for Expression {
     type Err = error::SyntaxError;

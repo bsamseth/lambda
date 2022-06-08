@@ -2,7 +2,7 @@ pub mod token;
 use super::error;
 use token::Token;
 
-pub type LexResult = error::Result<Vec<Token>>;
+pub type LexResult = Result<Vec<Token>, error::SyntaxError>;
 
 pub fn lex(code: &str) -> LexResult {
     let mut tokens: Vec<Token> = Vec::new();
