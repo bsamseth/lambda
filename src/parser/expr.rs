@@ -7,6 +7,21 @@ pub enum ExpressionKind {
     Application,
 }
 
+pub trait Kind {
+    fn kind(&self) -> &ExpressionKind;
+}
+pub trait Variable: Kind {
+    fn label(&self) -> &String;
+}
+pub trait Function: Kind {
+    fn param(&self) -> &String;
+    fn body(&self) -> &Box<Expression>;
+}
+pub trait Application: Kind {
+    fn lhs(&self) -> &Box<Expression>;
+    fn rhs(&self) -> &Box<Expression>;
+}
+
 #[derive(Debug)]
 pub struct Expression {
     kind: ExpressionKind,
@@ -15,7 +30,7 @@ pub struct Expression {
     label: Option<String>,
 
     // If this is a function:
-    params: Option<Vec<String>>,
+    param: Option<String>,
     body: Option<Box<Expression>>,
 
     // If this is an application:
@@ -23,23 +38,55 @@ pub struct Expression {
     rhs: Option<Box<Expression>>,
 }
 
+impl Kind for Expression {
+    fn kind(&self) -> &ExpressionKind {
+        &self.kind
+    }
+}
+
+impl Variable for Expression {
+    fn label(&self) -> &String {
+        self.label.as_ref().unwrap()
+    }
+}
+
+impl Function for Expression {
+    fn param(&self) -> &String {
+        self.param.as_ref().unwrap()
+    }
+
+    fn body(&self) -> &Box<Expression> {
+        self.body.as_ref().unwrap()
+    }
+}
+
+impl Application for Expression {
+    fn lhs(&self) -> &Box<Expression> {
+        self.lhs.as_ref().unwrap()
+    }
+
+    fn rhs(&self) -> &Box<Expression> {
+        self.rhs.as_ref().unwrap()
+    }
+}
+
 impl Expression {
     pub fn new_variable(label: &str) -> Self {
         Self {
             kind: ExpressionKind::Variable,
             label: Some(String::from(label)),
-            params: None,
+            param: None,
             body: None,
             lhs: None,
             rhs: None,
         }
     }
 
-    pub fn new_function(params: Vec<String>, body: Expression) -> Self {
+    pub fn new_function(param: String, body: Expression) -> Self {
         Self {
             kind: ExpressionKind::Function,
             label: None,
-            params: Some(params),
+            param: Some(param),
             body: Some(Box::new(body)),
             lhs: None,
             rhs: None,
@@ -50,7 +97,7 @@ impl Expression {
         Self {
             kind: ExpressionKind::Application,
             label: None,
-            params: None,
+            param: None,
             body: None,
             lhs: Some(Box::new(lhs)),
             rhs: Some(Box::new(rhs)),
@@ -65,7 +112,7 @@ impl fmt::Display for Expression {
             ExpressionKind::Function => write!(
                 f,
                 "λ{}.{}",
-                self.params.as_ref().unwrap().join(".λ"),
+                self.param.as_ref().unwrap(),
                 self.body.as_ref().unwrap()
             ),
             ExpressionKind::Application => {

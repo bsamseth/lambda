@@ -33,32 +33,25 @@ fn parse_expression(tokens: &mut TokenIterator) -> ParseResult {
             Token::LeftParen => parse_expression(tokens),
             Token::RightParen => break,
             Token::Lambda => {
-                let mut params: Vec<String> = Vec::new();
-                loop {
-                    match tokens.next() {
-                        Some(Token::Variable(label)) => params.push(label.clone()),
-                        _ => {
-                            return Err(LambdaError::SyntaxError(
-                                "Expected variable after lambda.".to_string(),
-                            ))
-                        }
-                    };
-                    match tokens.next() {
-                        Some(Token::Dot) => true,
-                        _ => {
-                            return Err(LambdaError::SyntaxError(
-                                "Expected dot after parameter.".to_string(),
-                            ))
-                        }
-                    };
-                    match tokens.peek() {
-                        Some(Token::Lambda) => tokens.next(),
-                        _ => break,
-                    };
-                }
+                let param = match tokens.next() {
+                    Some(Token::Variable(label)) => label.clone(),
+                    _ => {
+                        return Err(LambdaError::SyntaxError(
+                            "Expected variable after lambda.".to_string(),
+                        ))
+                    }
+                };
+                assert!(match tokens.next() {
+                    Some(Token::Dot) => true,
+                    _ => {
+                        return Err(LambdaError::SyntaxError(
+                            "Expected dot after parameter.".to_string(),
+                        ));
+                    }
+                });
 
                 let body = parse_expression(tokens)?;
-                Ok(Expression::new_function(params, body))
+                Ok(Expression::new_function(param, body))
             }
         };
 
