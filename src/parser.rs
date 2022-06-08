@@ -4,13 +4,14 @@ use super::lexer;
 use super::lexer::token::Token;
 use super::lexer::token::TokenIterator;
 use crate::error;
+use crate::error::LambdaError;
 use expr::Expression;
 use std::str;
 
-pub type ParseResult = Result<Expression, error::SyntaxError>;
+pub type ParseResult = Result<Expression, error::LambdaError>;
 
 impl str::FromStr for Expression {
-    type Err = error::SyntaxError;
+    type Err = error::LambdaError;
 
     fn from_str(s: &str) -> ParseResult {
         let tokens = lexer::lex(s)?;
@@ -25,7 +26,9 @@ fn parse_expression(tokens: &mut TokenIterator) -> ParseResult {
 
     while let Some(token) = tokens.next() {
         let expr = match token {
-            Token::Dot => Err("Unexpected dot outside of function.".into()),
+            Token::Dot => Err(LambdaError::SyntaxError(
+                "Unexpected dot outside of function.".to_string(),
+            )),
             Token::Variable(label) => Ok(Expression::new_variable(label)),
             Token::LeftParen => parse_expression(tokens),
             Token::RightParen => break,
@@ -34,11 +37,19 @@ fn parse_expression(tokens: &mut TokenIterator) -> ParseResult {
                 loop {
                     match tokens.next() {
                         Some(Token::Variable(label)) => params.push(label.clone()),
-                        _ => return Err("Expected variable after lambda.".into()),
+                        _ => {
+                            return Err(LambdaError::SyntaxError(
+                                "Expected variable after lambda.".to_string(),
+                            ))
+                        }
                     };
                     match tokens.next() {
                         Some(Token::Dot) => true,
-                        _ => return Err("Expected dot after parameter.".into()),
+                        _ => {
+                            return Err(LambdaError::SyntaxError(
+                                "Expected dot after parameter.".to_string(),
+                            ))
+                        }
                     };
                     match tokens.peek() {
                         Some(Token::Lambda) => tokens.next(),
@@ -64,6 +75,8 @@ fn parse_expression(tokens: &mut TokenIterator) -> ParseResult {
 
     match last_expr {
         Some(expr) => Ok(expr),
-        None => Err("The code does not contain an expression.".into()),
+        None => Err(LambdaError::SyntaxError(
+            "The code does not contain an expression.".to_string(),
+        )),
     }
 }

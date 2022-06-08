@@ -1,8 +1,9 @@
 pub mod token;
 use super::error;
+use crate::error::LambdaError;
 use token::Token;
 
-pub type LexResult = Result<Vec<Token>, error::SyntaxError>;
+pub type LexResult = Result<Vec<Token>, error::LambdaError>;
 
 pub fn lex(code: &str) -> LexResult {
     let mut tokens: Vec<Token> = Vec::new();
@@ -29,7 +30,7 @@ pub fn lex(code: &str) -> LexResult {
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
             _ => {
-                return Err(format!("Illegal character {}", c).into());
+                return Err(LambdaError::SyntaxError(format!("Illegal character {}", c)));
             }
         };
 
