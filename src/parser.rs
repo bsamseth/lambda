@@ -11,7 +11,7 @@ use std::str;
 pub type ParseResult = Result<Expression, error::LambdaError>;
 
 impl str::FromStr for Expression {
-    type Err = error::LambdaError;
+    type Err = LambdaError;
 
     fn from_str(s: &str) -> ParseResult {
         let tokens = lexer::lex(s)?;
