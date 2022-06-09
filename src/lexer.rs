@@ -3,7 +3,7 @@ use super::error;
 use crate::error::LambdaError;
 use token::Token;
 
-pub type LexResult = Result<Vec<Token>, error::LambdaError>;
+pub type LexResult = Result<Vec<Token>, LambdaError>;
 
 pub fn lex(code: &str) -> LexResult {
     let mut tokens: Vec<Token> = Vec::new();

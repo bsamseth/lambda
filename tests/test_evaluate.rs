@@ -47,6 +47,15 @@ fn succ() {
 }
 
 #[test]
+fn pred() {
+    let one_as_pred_of_two = evaluate(church::pred() * church::two());
+    assert_eq!(one_as_pred_of_two.to_string(), church::ONE);
+
+    let one_by_repeated_pred = evaluate(church::pred() * (church::pred() * church::three()));
+    assert_eq!(one_by_repeated_pred.to_string(), church::ONE);
+}
+
+#[test]
 fn add() {
     let three_by_adding_one_and_two = evaluate(church::add() * church::one() * church::two());
     assert_eq!(three_by_adding_one_and_two.to_string(), church::THREE);
@@ -62,5 +71,24 @@ fn mul() {
     assert_eq!(
         four_by_multiplying_two_and_two.to_string(),
         four_by_succ_of_three.to_string()
+    );
+}
+
+#[test]
+fn pow() {
+    // let four_by_succ_of_three = evaluate(church::succ() * church::three());
+    // let four_by_pow = evaluate(evaluate((church::pow() * church::two()) * church::two()));
+    // assert_eq!(four_by_pow.to_string(), four_by_succ_of_three.to_string());
+    let square: Expression = "(λb.λe.e b) (λf.λx.f (f x))" // (λf.λx.f (f x))"
+        .parse()
+        .unwrap();
+    let four_by_pow: Expression = "(λb.λe.e b) (λf.λx.f (f x)) (λf.λx.f (f x))"
+        .parse()
+        .unwrap();
+    println!("square = {} = {}", square, evaluate(square.clone()));
+    println!(
+        "four_by_pow = {} = {}",
+        four_by_pow,
+        evaluate(four_by_pow.clone())
     );
 }
