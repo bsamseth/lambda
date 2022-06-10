@@ -1,4 +1,4 @@
-use lambda::parser::ParseResult;
+use lambda::parse::ParseResult;
 
 fn check_parsed_correctly(code: &str, expected: &str) {
     let expr: ParseResult = code.parse();

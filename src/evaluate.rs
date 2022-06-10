@@ -12,7 +12,7 @@ use crate::normalize::normalize_variables;
 /// use lambda::expr::Expression;
 ///
 /// let expr: Expression = "(λn.λf.λx.f (n f x)) λf.λx.x".parse().unwrap();
-/// let one = lambda::evaluator::evaluate(expr);
+/// let one = lambda::evaluate::evaluate(expr);
 /// assert_eq!(one.to_string(), "λ1.λ2.1 2");
 ///
 /// let three = church::add() * church::one() * church::two();

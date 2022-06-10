@@ -1,4 +1,4 @@
-use crate::evaluator::evaluate;
+use crate::evaluate::evaluate;
 use crate::normalize::normalize_variables;
 use std::fmt;
 

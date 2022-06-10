@@ -11,7 +11,10 @@ use crate::expr::Expression;
 /// ```rust
 /// use lambda::normalize::normalize_variables;
 /// assert_eq!(normalize_variables("λx.x".parse().unwrap()).to_string(), "λ1.1");
-/// assert_eq!(normalize_variables("λx.λy.λx.x y".parse().unwrap()).to_string(), "λ1.λ2.λ3.3 2");
+/// assert_eq!(
+///     normalize_variables("λx.λy.λx.x y".parse().unwrap()).to_string(),
+///     "λ1.λ2.λ3.3 2"
+/// );
 /// ```
 pub fn normalize_variables(expr: Expression) -> Expression {
     let mut next_name = (1..).map(|n| format!("{}", n));

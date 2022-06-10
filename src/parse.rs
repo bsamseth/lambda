@@ -1,4 +1,4 @@
-use super::lexer;
+use super::lex;
 use crate::error;
 use crate::error::LambdaError;
 use crate::expr::Expression;
@@ -12,7 +12,7 @@ impl str::FromStr for Expression {
     type Err = LambdaError;
 
     fn from_str(s: &str) -> ParseResult {
-        let tokens = lexer::lex(s)?;
+        let tokens = lex::lex(s)?;
         let mut tokens = TokenIterator::new(&tokens);
         parse_expression(&mut tokens)
     }

@@ -1,7 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use lambda::constants::church;
-use lambda::evaluator::evaluate;
+use lambda::evaluate::evaluate;
 use lambda::expr::Expression;
 
 fn check_is_equal(code: &str, expected: &str) {

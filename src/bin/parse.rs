@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use lambda::parser::ParseResult;
+use lambda::parse::ParseResult;
 
 fn try_parse(code: &str) {}
 
