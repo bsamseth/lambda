@@ -18,10 +18,6 @@ impl<'a> TokenIterator<'a> {
         Self { tokens, index: 0 }
     }
 
-    pub fn peek(&self) -> Option<&Token> {
-        self.tokens.get(self.index)
-    }
-
     pub fn index(&self) -> usize {
         self.index
     }
