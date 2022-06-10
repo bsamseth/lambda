@@ -1,5 +1,5 @@
 pub mod church {
-    use crate::parser::expr::Expression;
+    use crate::expr::Expression;
 
     pub const ZERO: &str = "λf.λx.x";
     pub const ONE: &str = "λf.λx.f x";

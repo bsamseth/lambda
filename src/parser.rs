@@ -1,11 +1,9 @@
-pub mod expr;
-
 use super::lexer;
-use super::lexer::token::Token;
-use super::lexer::token::TokenIterator;
 use crate::error;
 use crate::error::LambdaError;
-use expr::Expression;
+use crate::expr::Expression;
+use crate::token::Token;
+use crate::token::TokenIterator;
 use std::str;
 
 pub type ParseResult = Result<Expression, error::LambdaError>;

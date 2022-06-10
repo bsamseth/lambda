@@ -1,7 +1,5 @@
-pub mod token;
-use super::error;
 use crate::error::LambdaError;
-use token::Token;
+use crate::token::Token;
 
 pub type LexResult = Result<Vec<Token>, LambdaError>;
 
@@ -11,7 +9,7 @@ pub fn lex(code: &str) -> LexResult {
 
     for c in code.chars() {
         match c {
-            'a'..='z' | 'A'..='Z' | '_' => {
+            'a'..='z' | 'A'..='Z' | '_' | '0'..='9' => {
                 current_identifier.push(c);
                 continue;
             }

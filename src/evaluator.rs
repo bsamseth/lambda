@@ -1,64 +1,86 @@
-use crate::parser::expr::Expression;
 use std::collections::HashMap;
 
+use crate::expr::Expression;
+use crate::normalize::normalize_variables;
+
+/// Evaluate an expression and return the normalized result.
+///
+/// This can also be used as a method on `Expression`.
+/// # Examples
+/// ```rust
+/// use lambda::constants::church;
+/// use lambda::expr::Expression;
+///
+/// let expr: Expression = "(λn.λf.λx.f (n f x)) λf.λx.x".parse().unwrap();
+/// let one = lambda::evaluator::evaluate(expr);
+/// assert_eq!(one.to_string(), "λ1.λ2.1 2");
+///
+/// let three = church::add() * church::one() * church::two();
+/// assert_eq!(three.evaluate(), church::three().normalize());
+/// ```
 pub fn evaluate(expr: Expression) -> Expression {
-    eval_with_variable_bindings(expr, &mut HashMap::new())
+    evaluate_normalized(normalize_variables(expr))
 }
 
-fn eval_with_variable_bindings(
-    expr: Expression,
-    bindings: &mut HashMap<String, Expression>,
-) -> Expression {
+/// Evaluate an expression that is already normalized.
+///
+/// The expression is assumed to be normalized, and the result is not defined
+/// if this is not true. Note that it can be normalized differently to what
+/// lambda::normalize::normalize_variables does, it just means there is no name
+/// shadowing in the expression.
+///
+/// The result of the evaluation will be normalized.
+pub fn evaluate_normalized(expr: Expression) -> Expression {
+    normalize_variables(evaluate_no_normalization(expr))
+}
+
+/// Evaluate an expression that is already normalized, without post-normalization
+///
+/// See evaluate_normalized for more information. This will do what evaluate_normalized does,
+/// only it will not apply normalization to the result of the evaluation.
+pub fn evaluate_no_normalization(expr: Expression) -> Expression {
+    _evaluate(expr, &mut HashMap::new())
+}
+
+fn _evaluate(expr: Expression, bindings: &mut HashMap<String, Expression>) -> Expression {
     match expr {
         Expression::Variable(label) => {
             // If the variable is bound, return the bound value, otherwise just return the variable.
             (*bindings.get(&label).unwrap_or(&Expression::Variable(label))).clone()
         }
         Expression::Function(param, body) => {
-            // Functions evaluate just need to recursively evaluate the body.
-            Expression::new_function(param, eval_with_variable_bindings(*body, bindings))
+            Expression::new_function(param, _evaluate(*body, bindings))
         }
         Expression::Application(lhs, rhs) => {
-            // Evaluate the rhs with existing bindings before anything else, irrespective of the lhs.
-            // If the lhs is a function, then we _must_ do this before binding it to the parameter
-            // of the lhs function. This is because the parameter might shadow an existing binding
-            // that should be applied to the rhs first.
-            // If the lhs is not a function, then it doesn't matter which order we do this in.
-            let rhs = eval_with_variable_bindings(*rhs, bindings);
+            let rhs = _evaluate(*rhs, bindings);
 
             // If the lhs is a function, we want to apply it to the rhs. However, the lhs might
             // not _yet_ be a function, and will only reduce to a function after being evaluated.
             // If and only if it is an application, we evaluate the lhs first.
             let lhs = match *lhs {
-                Expression::Application(_, _) => eval_with_variable_bindings(*lhs, bindings),
+                Expression::Application(_, _) => _evaluate(*lhs, bindings),
                 _ => *lhs,
             };
 
             match lhs {
                 Expression::Function(param, body) => {
                     // Perform β-reduction, i.e. apply the lhs with the rhs as the argument.
-                    let prev = bindings.insert(param.clone(), rhs);
-                    let result = eval_with_variable_bindings(*body, bindings);
-
-                    // Restore the previous binding if there was one, otherwise clear it out.
-                    if let Some(p) = prev {
-                        bindings.insert(param.to_owned(), p);
-                    } else {
-                        bindings.remove(param.as_str());
-                    }
+                    bindings.insert(param.clone(), rhs);
+                    let result = _evaluate(*body, bindings);
+                    bindings.remove(param.as_str());
 
                     // At this point we have performed β-reduction. It might still be that the result
-                    // an application of a function, which could be further reduced. We therefore,
+                    // is an application of a function, which could be further reduced. We therefore,
                     // recursively evaluate the result once more. Note that if a function application
                     // evaluates to itself, this would become an infinite loop. Evaluating such an
                     // expression would be an infinite computation, so crashing here seems reasonable.
                     // Could possibly try to detect this and just return the expression.
-                    eval_with_variable_bindings(result, bindings)
+                    _evaluate(result, bindings)
                 }
                 _ => {
                     // The application is abstract, so can't be β-reduced. In this case we just
                     // evaluate the lhs as well and return the abstract application.
-                    let lhs = eval_with_variable_bindings(lhs, bindings);
+                    let lhs = _evaluate(lhs, bindings);
                     Expression::new_application(lhs, rhs)
                 }
             }

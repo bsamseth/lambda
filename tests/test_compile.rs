@@ -1,6 +1,3 @@
-use lambda::codegen;
-use lambda::parser;
-
 #[test]
 fn test_dummy() {
     // let expr: parser::ParseResult = "x y z".parse();

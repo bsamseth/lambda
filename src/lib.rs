@@ -4,5 +4,8 @@ pub mod codegen;
 pub mod constants;
 pub mod error;
 pub mod evaluator;
+pub mod expr;
 pub mod lexer;
+pub mod normalize;
 pub mod parser;
+pub mod token;

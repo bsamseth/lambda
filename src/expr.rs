@@ -1,3 +1,5 @@
+use crate::evaluator::evaluate;
+use crate::normalize::normalize_variables;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -18,6 +20,14 @@ impl Expression {
 
     pub fn new_application(lhs: Expression, rhs: Expression) -> Self {
         Expression::Application(Box::new(lhs), Box::new(rhs))
+    }
+
+    pub fn evaluate(self) -> Expression {
+        evaluate(self)
+    }
+
+    pub fn normalize(self) -> Expression {
+        normalize_variables(self)
     }
 }
 
@@ -44,6 +54,23 @@ impl fmt::Display for Expression {
                     _ => write!(f, "({}) ({})", lhs, rhs),
                 },
             },
+        }
+    }
+}
+
+impl PartialEq for Expression {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Expression::Variable(lhs), Expression::Variable(rhs)) => lhs == rhs,
+            (
+                Expression::Function(lhs_param, lhs_body),
+                Expression::Function(rhs_param, rhs_body),
+            ) => lhs_param == rhs_param && lhs_body == rhs_body,
+            (
+                Expression::Application(lhs_lhs, lhs_rhs),
+                Expression::Application(rhs_lhs, rhs_rhs),
+            ) => lhs_lhs == rhs_lhs && lhs_rhs == rhs_rhs,
+            _ => false,
         }
     }
 }
