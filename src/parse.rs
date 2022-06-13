@@ -1,12 +1,16 @@
-use super::lex;
-use crate::error;
+use std::str;
+
 use crate::error::LambdaError;
 use crate::expr::Expression;
 use crate::token::Token;
 use crate::token::TokenIterator;
-use std::str;
 
-pub type ParseResult = Result<Expression, error::LambdaError>;
+use super::lex;
+
+/// A result of parsing a lambda term.
+///
+/// If successful the result is the parsed expression, and otherwise a syntax error is produced.
+pub type ParseResult = Result<Expression, LambdaError>;
 
 impl str::FromStr for Expression {
     type Err = LambdaError;

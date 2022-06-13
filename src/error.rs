@@ -1,5 +1,6 @@
 use std::fmt;
 
+/// An error with a lambda expression.
 #[derive(Debug, Clone)]
 pub enum LambdaError {
     SyntaxError(String),

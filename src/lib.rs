@@ -1,11 +1,16 @@
-extern crate core;
-
-pub mod codegen;
-pub mod constants;
-pub mod error;
-pub mod evaluate;
-pub mod expr;
+mod codegen;
+mod constants;
+mod error;
+mod evaluate;
+mod expr;
 mod lex;
-pub mod normalize;
-pub mod parse;
+mod normalize;
+mod parse;
 mod token;
+
+pub use constants::church;
+pub use error::LambdaError;
+pub use evaluate::{evaluate, evaluate_no_normalization, evaluate_normalized};
+pub use expr::Expression;
+pub use normalize::normalize_variables;
+pub use parse::ParseResult;

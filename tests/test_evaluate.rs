@@ -1,8 +1,8 @@
 use pretty_assertions::assert_eq;
 
-use lambda::constants::church;
-use lambda::evaluate::evaluate;
-use lambda::expr::Expression;
+use lambda::church;
+use lambda::evaluate;
+use lambda::Expression;
 
 fn check_is_equal(code: &str, expected: &str) {
     let expr = code
@@ -93,4 +93,16 @@ fn pow() {
     let sixteen_by_pow = evaluate(church::pow() * church::two() * four_by_pow.clone());
     let sixteen_by_mul = evaluate(church::mul() * four_by_pow.clone() * four_by_pow);
     check_expr_against_expr(&sixteen_by_pow, &sixteen_by_mul);
+}
+
+#[test]
+fn y_combinator() {
+    // This failed to evaluate in the evaluator binary executable.
+    assert_eq!(
+        "λg.(λx.g (x x)) (λx.g (x x))"
+            .parse::<Expression>()
+            .unwrap()
+            .to_string(),
+        ""
+    );
 }

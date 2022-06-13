@@ -1,6 +1,6 @@
-use lambda::constants::church;
-use lambda::expr::Expression;
-use lambda::normalize::normalize_variables;
+use lambda::church;
+use lambda::normalize_variables;
+use lambda::Expression;
 use pretty_assertions::assert_eq;
 
 fn check_normalized_correctly(code: &str, expected: &str) {

@@ -2,6 +2,9 @@ use crate::evaluate::evaluate;
 use crate::normalize::normalize_variables;
 use std::fmt;
 
+/// An expression in the lambda calculus.
+///
+/// This represents a lambda term, and is either a variable, a function (abstraction) or an application.
 #[derive(Debug, Clone)]
 pub enum Expression {
     Variable(String),

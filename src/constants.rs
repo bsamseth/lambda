@@ -1,3 +1,4 @@
+/// Constants for common functions from Church's formalism.
 pub mod church {
     use crate::expr::Expression;
 

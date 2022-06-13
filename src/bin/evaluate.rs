@@ -9,6 +9,6 @@ fn main() {
     println!(
         "'{}' -> {}",
         code,
-        parsed.map_or_else(|e| format!("{}", e), |p| format!("{}", p),),
+        parsed.map_or_else(|e| format!("{}", e), |p| format!("{}", p.evaluate()))
     );
 }
