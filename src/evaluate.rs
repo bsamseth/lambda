@@ -8,11 +8,11 @@ use crate::normalize::normalize_variables;
 /// This can also be used as a method on `Expression`.
 /// # Examples
 /// ```rust
-/// use lambda::constants::church;
-/// use lambda::expr::Expression;
+/// use lambda::church;
+/// use lambda::Expression;
 ///
 /// let expr: Expression = "(λn.λf.λx.f (n f x)) λf.λx.x".parse().unwrap();
-/// let one = lambda::evaluate::evaluate(expr);
+/// let one = lambda::evaluate(expr);
 /// assert_eq!(one.to_string(), "λ1.λ2.1 2");
 ///
 /// let three = church::add() * church::one() * church::two();
