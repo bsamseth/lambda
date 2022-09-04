@@ -94,15 +94,3 @@ fn pow() {
     let sixteen_by_mul = evaluate(church::mul() * four_by_pow.clone() * four_by_pow);
     check_expr_against_expr(&sixteen_by_pow, &sixteen_by_mul);
 }
-
-#[test]
-fn y_combinator() {
-    // This failed to evaluate in the evaluator binary executable.
-    assert_eq!(
-        "λg.(λx.g (x x)) (λx.g (x x))"
-            .parse::<Expression>()
-            .unwrap()
-            .to_string(),
-        ""
-    );
-}
