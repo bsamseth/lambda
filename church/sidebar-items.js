@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":[["ADD",""],["MUL",""],["ONE",""],["POW",""],["PRED",""],["SUCC",""],["THREE",""],["TWO",""],["ZERO",""]],"fn":[["add",""],["mul",""],["one",""],["pow",""],["pred",""],["succ",""],["three",""],["two",""],["zero",""]]};
