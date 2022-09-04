@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["lambda"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.63.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"lambda/enum.Expression.html\" title=\"enum lambda::Expression\">Expression</a>","synthetic":false,"types":["lambda::expr::Expression"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
